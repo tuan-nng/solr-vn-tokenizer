@@ -2,6 +2,8 @@ package org.apache.lucene.analysis.vi;
 
 import org.apache.lucene.analysis.*;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Arrays;
 import java.util.List;
 
@@ -10,6 +12,7 @@ import java.util.List;
  */
 public class VietnameseAnalyzer extends StopwordAnalyzerBase {
     public static final CharArraySet VIETNAMESE_STOP_WORDS_SET;
+    private final me.duydo.vi.Tokenizer tokenizer;
 
     static {
         final List<String> stopWords = Arrays.asList(
@@ -54,11 +57,12 @@ public class VietnameseAnalyzer extends StopwordAnalyzerBase {
      */
     public VietnameseAnalyzer(CharArraySet stopWords) {
         super(stopWords);
+        this.tokenizer = AccessController.doPrivileged((PrivilegedAction<me.duydo.vi.Tokenizer>) me.duydo.vi.Tokenizer::new);
     }
 
     @Override
     protected TokenStreamComponents createComponents(String fieldName) {
-        final Tokenizer tokenizer = new VietnameseTokenizer();
+        final Tokenizer tokenizer = new VietnameseTokenizer(this.tokenizer);
         TokenStream tokenStream = new LowerCaseFilter(tokenizer);
         tokenStream = new StopFilter(tokenStream, stopwords);
         return new TokenStreamComponents(tokenizer, tokenStream);

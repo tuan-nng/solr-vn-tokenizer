@@ -5,21 +5,20 @@ import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.util.TokenizerFactory;
 import org.apache.lucene.util.AttributeFactory;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Map;
 
 public class VietnameseTokenizerFactory extends TokenizerFactory {
-
-    private final boolean sentenceDetectorEnabled;
-    private final boolean ambiguitiesResolved;
+    private final me.duydo.vi.Tokenizer tokenizer;
 
     public VietnameseTokenizerFactory(Map<String, String> args) {
         super(args);
-        this.sentenceDetectorEnabled = getBoolean(args, "sentenceDetectorEnabled", VietnameseTokenizer.DEFAULT_SENTENCE_DETECTOR_ENABLED);
-        this.ambiguitiesResolved = getBoolean(args, "ambiguitiesResolved", VietnameseTokenizer.DEFAULT_AMBIGUITIES_RESOLVED);
+        tokenizer = AccessController.doPrivileged((PrivilegedAction<me.duydo.vi.Tokenizer>) me.duydo.vi.Tokenizer::new);
     }
 
     @Override
     public Tokenizer create(AttributeFactory attributeFactory) {
-        return new VietnameseTokenizer(sentenceDetectorEnabled, ambiguitiesResolved);
+        return new VietnameseTokenizer(tokenizer);
     }
 }

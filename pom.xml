@@ -5,6 +5,9 @@
     <artifactId>solr-vn-analyzer</artifactId>
     <packaging>jar</packaging>
     <version>1.0</version>
+    <properties>
+        <lucene.version>7.7.1</lucene.version>
+    </properties>
     <name>solr-vn-analyzer</name>
     <url>http://maven.apache.org</url>
     <dependencies>
@@ -16,17 +19,17 @@
         <dependency>
             <groupId>vn.hus</groupId>
             <artifactId>nlp-tokenizer</artifactId>
-            <version>4.1.1</version>
+            <version>4.1.2</version>
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-core</artifactId>
-            <version>7.7.1</version>
+            <version>${lucene.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-analyzers-common</artifactId>
-            <version>7.7.1</version>
+            <version>${lucene.version}</version>
         </dependency>
 
         <!-- Java 11 -->
@@ -55,13 +58,19 @@
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-test-framework</artifactId>
-            <version>7.7.1</version>
+            <version>${lucene.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
-            <version>5.4.0</version>
+            <version>5.4.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
+            <version>5.4.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -109,4 +118,12 @@
             </plugin>
         </plugins>
     </build>
+
+    <repositories>
+        <repository>
+            <id>example-repo</id>
+            <name>Example Repository</name>
+            <url>file://{project.basedir}/local-maven-repo</url>
+        </repository>
+    </repositories>
 </project>
