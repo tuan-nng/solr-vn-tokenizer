@@ -39,7 +39,7 @@ public class VietnameseTokenizer extends Tokenizer {
     }
 
     private void tokenize() throws IOException {
-        inputText = IOUtils.toString(input);
+        inputText = IOUtils.toString(input).replaceAll("\\s{2,}", " ");
         final List<TaggedWord> result = tokenizer.tokenize(new StringReader(inputText));
         if (result != null) {
             pending.addAll(result);
