@@ -39,7 +39,7 @@ public class VietnameseTokenizer extends Tokenizer {
     }
 
     private void tokenize() throws IOException {
-        inputText = IOUtils.toString(input).replaceAll("\\s{2,}", " ");
+        inputText = IOUtils.toString(input).replaceAll("\\s+", " ");
         final List<TaggedWord> result = tokenizer.tokenize(new StringReader(inputText));
         if (result != null) {
             pending.addAll(result);
@@ -66,6 +66,9 @@ public class VietnameseTokenizer extends Tokenizer {
                 typeAtt.setType(String.format("<%s>", word.getRule().getName().toUpperCase()));
                 termAtt.copyBuffer(word.getText().toCharArray(), 0, length);
                 final int start = inputText.indexOf(word.getText(), offset);
+                if (start < 0) {
+                    throw new IllegalArgumentException("Token `" + word.getText() + "` should appear in the text: " + inputText);
+                }
                 offsetAtt.setOffset(correctOffset(start), offset = correctOffset(start + length));
                 return true;
             }

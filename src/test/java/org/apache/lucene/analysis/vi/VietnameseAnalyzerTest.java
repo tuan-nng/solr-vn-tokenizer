@@ -27,7 +27,7 @@ public class VietnameseAnalyzerTest extends BaseTokenStreamTestCase {
     void analyzeVietnamese3() throws IOException {
         VietnameseAnalyzer analyzer = new VietnameseAnalyzer();
         TokenStream tokenStream = analyzer.tokenStream("test", "Trong các đẳng\nthức sau\n\n");
-        assertTokenStreamContents(tokenStream, new String[]{"trong", "đẳng", "thức"});
+        assertTokenStreamContents(tokenStream, new String[]{"trong", "đẳng thức"});
     }
 
     @Test
