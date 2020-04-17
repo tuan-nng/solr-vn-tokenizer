@@ -20,7 +20,6 @@ import static vn.corenlp.wordsegmenter.Utils.NORMALIZER_KEYS;
 /**
  * Vietnamese Tokenizer.
  *
- * @author duydo
  */
 public class VietnameseTokenizer extends Tokenizer {
     private int offset = 0;

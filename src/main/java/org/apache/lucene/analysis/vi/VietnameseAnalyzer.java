@@ -7,9 +7,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author duydo
- */
 public class VietnameseAnalyzer extends StopwordAnalyzerBase {
     public static final CharArraySet VIETNAMESE_STOP_WORDS_SET;
     private final VnCoreNLP vnCoreNLP;
