@@ -1,17 +1,21 @@
 package org.apache.lucene.analysis.vi;
 
+import com.google.common.base.Strings;
 import org.apache.commons.io.IOUtils;
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 import org.apache.lucene.analysis.tokenattributes.TypeAttribute;
-import vn.hus.nlp.tokenizer.tokens.TaggedWord;
+import vn.pipeline.Annotation;
+import vn.pipeline.VnCoreNLP;
+import vn.pipeline.Word;
 
 import java.io.IOException;
-import java.io.StringReader;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Iterator;
+
+import static vn.corenlp.wordsegmenter.Utils.NORMALIZER;
+import static vn.corenlp.wordsegmenter.Utils.NORMALIZER_KEYS;
 
 /**
  * Vietnamese Tokenizer.
@@ -19,71 +23,56 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author duydo
  */
 public class VietnameseTokenizer extends Tokenizer {
-    private List<TaggedWord> pending = new CopyOnWriteArrayList<>();
-
     private int offset = 0;
-    private int pos = 0;
 
     private final CharTermAttribute termAtt = addAttribute(CharTermAttribute.class);
     private final OffsetAttribute offsetAtt = addAttribute(OffsetAttribute.class);
     private final TypeAttribute typeAtt = addAttribute(TypeAttribute.class);
     private final PositionIncrementAttribute posIncrAtt = addAttribute(PositionIncrementAttribute.class);
 
-    private final me.duydo.vi.Tokenizer tokenizer;
+    private final VnCoreNLP vnCoreNLP;
     private String inputText;
-    private boolean isInitialized = false;
+    private String preprocessedText;
+    private Iterator<Word> iterator = null;
 
-    public VietnameseTokenizer(me.duydo.vi.Tokenizer tokenizer) {
+    public VietnameseTokenizer(VnCoreNLP vnCoreNLP) {
         super();
-        this.tokenizer = tokenizer;
+        this.vnCoreNLP = vnCoreNLP;
     }
 
     private void tokenize() throws IOException {
-        inputText = IOUtils.toString(input).replaceAll("\\s+", " ");
-        final List<TaggedWord> result = tokenizer.tokenize(new StringReader(inputText));
-        if (result != null) {
-            pending.addAll(result);
+        inputText = IOUtils.toString(input);
+        preprocessedText = inputText.replaceAll("_", " ");
+        for (String key : NORMALIZER_KEYS) {
+            preprocessedText = preprocessedText.replaceAll(key, NORMALIZER.get(key));
         }
+        Annotation annotation = new Annotation(preprocessedText);
+        vnCoreNLP.annotate(annotation);
+        iterator = annotation.getWords().iterator();
     }
 
     @Override
     public final boolean incrementToken() throws IOException {
-        if (!isInitialized) {
+        if (iterator == null) {
             tokenize();
-            isInitialized = true;
         }
-        if (pending.size() == 0) {
+
+        if (!iterator.hasNext()) {
             return false;
         }
         clearAttributes();
 
-        for (int i = pos; i < pending.size(); i++) {
-            pos++;
-            final TaggedWord word = pending.get(i);
-            if (accept(word)) {
-                posIncrAtt.setPositionIncrement(1);
-                final int length = word.getText().length();
-                typeAtt.setType(String.format("<%s>", word.getRule().getName().toUpperCase()));
-                termAtt.copyBuffer(word.getText().toCharArray(), 0, length);
-                final int start = inputText.indexOf(word.getText(), offset);
-                if (start < 0) {
-                    throw new IllegalArgumentException("Token `" + word.getText() + "` should appear in the text: " + inputText);
-                }
-                offsetAtt.setOffset(correctOffset(start), offset = correctOffset(start + length));
-                return true;
-            }
+        Word word = iterator.next();
+        posIncrAtt.setPositionIncrement(1);
+        String form = word.getForm();
+        typeAtt.setType(TypeAttribute.DEFAULT_TYPE);
+        Location location = indexOf(preprocessedText, form, offset);
+        if (location == null) {
+            throw new IllegalArgumentException("Token `" + form + "` should appear in the text: " + inputText);
         }
-        return false;
-    }
-
-    /**
-     * Only accept the word characters.
-     */
-    private final boolean accept(TaggedWord word) {
-        final String type = word.getRule().getName().toLowerCase();
-        if ("punctuation".equals(type) || "special".equals(type)) {
-            return false;
-        }
+        String term = inputText.substring(location.start, location.end).replaceAll("\\s+", " ");
+        termAtt.copyBuffer(term.toCharArray(), 0, term.length());
+        offsetAtt.setOffset(correctOffset(location.start), offset = correctOffset(location.end));
         return true;
     }
 
@@ -97,9 +86,59 @@ public class VietnameseTokenizer extends Tokenizer {
     @Override
     public void reset() throws IOException {
         super.reset();
-        pos = 0;
         offset = 0;
-        pending.clear();
-        isInitialized = false;
+        iterator = null;
+    }
+
+    private Location indexOf(String inputText, String word, int offset) {
+        if (Strings.isNullOrEmpty(word)) {
+            return null;
+        }
+
+        int startIndex = -1;
+        String[] components = word.split("_+");
+        int numOfComponents = components.length;
+        for (int i = 0; i < numOfComponents; i++) {
+            int start = find(inputText, components[i], offset);
+            if (start == -1) {
+                return null;
+            }
+            if (i == 0) {
+                startIndex = start;
+            }
+            offset = start + components[i].length();
+        }
+
+        return startIndex == -1 ? null : Location.of(startIndex, offset);
+    }
+
+    private int find(String inputText, String token, int offset) {
+        int start = inputText.indexOf(token, offset);
+        if (start == -1) {
+            for (String key : VnCoreNLPUtils.DENORMALIZER_KEYS) {
+                if (token.contains(key)) {
+                    String replacedToken = token.replaceAll(key, VnCoreNLPUtils.DENORMALIZER.get(key));
+                    start = inputText.indexOf(replacedToken, offset);
+                    if (start >= 0) {
+                        break;
+                    }
+                }
+            }
+        }
+        return start;
+    }
+
+    static class Location {
+        int start;
+        int end;
+
+        Location(int start, int end) {
+            this.start = start;
+            this.end = end;
+        }
+
+        static Location of(int start, int end) {
+            return new Location(start, end);
+        }
     }
 }

@@ -12,14 +12,14 @@
     <url>http://maven.apache.org</url>
     <dependencies>
         <dependency>
-            <groupId>vn.hus</groupId>
-            <artifactId>nlp-sd</artifactId>
-            <version>2.0.0</version>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.1</version>
         </dependency>
         <dependency>
-            <groupId>vn.hus</groupId>
-            <artifactId>nlp-tokenizer</artifactId>
-            <version>4.1.2</version>
+            <groupId>VnCoreNLP</groupId>
+            <artifactId>VnCoreNLP</artifactId>
+            <version>1.1.1</version>
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>

@@ -1,9 +1,9 @@
 package org.apache.lucene.analysis.vi;
 
 import org.apache.lucene.analysis.*;
+import vn.pipeline.VnCoreNLP;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -12,7 +12,7 @@ import java.util.List;
  */
 public class VietnameseAnalyzer extends StopwordAnalyzerBase {
     public static final CharArraySet VIETNAMESE_STOP_WORDS_SET;
-    private final me.duydo.vi.Tokenizer tokenizer;
+    private final VnCoreNLP vnCoreNLP;
 
     static {
         final List<String> stopWords = Arrays.asList(
@@ -57,12 +57,16 @@ public class VietnameseAnalyzer extends StopwordAnalyzerBase {
      */
     public VietnameseAnalyzer(CharArraySet stopWords) {
         super(stopWords);
-        this.tokenizer = AccessController.doPrivileged((PrivilegedAction<me.duydo.vi.Tokenizer>) me.duydo.vi.Tokenizer::new);
+        try {
+            this.vnCoreNLP = new VnCoreNLP(new String[]{"wseg"});
+        } catch (IOException e) {
+            throw new IllegalStateException("Cannot instantiate vnCoreNLP", e);
+        }
     }
 
     @Override
     protected TokenStreamComponents createComponents(String fieldName) {
-        final Tokenizer tokenizer = new VietnameseTokenizer(this.tokenizer);
+        final Tokenizer tokenizer = new VietnameseTokenizer(this.vnCoreNLP);
         TokenStream tokenStream = new LowerCaseFilter(tokenizer);
         tokenStream = new StopFilter(tokenStream, stopwords);
         return new TokenStreamComponents(tokenizer, tokenStream);
