@@ -20,7 +20,7 @@ mvn package
 Copy following jar files into solr server directory: `<solr dir>/server/lib`
  * solr-vn-analyzer-1.0.jar
  * VnCoreNLP-1.1.1.jar
- * commons-io.2.1.jar
+ * commons-io.2.7.jar
  * all jars in `target/lib` which contain `jaxb` prefix in name
  * activation-1.1.1.jar in `target/lib`  
  
