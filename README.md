@@ -1,6 +1,6 @@
 # Solr VN Tokenizer
 
-A Vietnamese tokenizer/analyzer plugin for Solr 7.7.1
+A Vietnamese tokenizer/analyzer plugin for Solr 8.5.2
 
 The plugin supports `VietnameseAnalyzer` and `VietnameseTokenizer`.
 
